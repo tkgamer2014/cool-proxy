@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Launch Website</title>
+  <style>
+    :root {
+      --bg-color: #f0f0f0;
+      --text-color: #000;
+      --input-bg: #eaffea;
+      --input-border: #00aa00;
+      --input-text: #006600;
+      --button-bg: white;
+      --button-text: #ff3300;
+      --button-hover: #ffe6e0;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #ffffff;
+      --input-bg: #1f3321;
+      --input-border: #00ff7f;
+      --input-text: #adff2f;
+      --button-bg: #333;
+      --button-text: #ff6347;
+      --button-hover: #444;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      margin-top: 40px;
+      text-align: center;
+      max-width: 900px;
+      width: 90%;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    input[type="text"], select {
+      padding: 10px 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 2px solid var(--input-border);
+      background-color: var(--input-bg);
+      color: var(--input-text);
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: #009900;
+      outline: none;
+    }
+
+    input[type="text"] {
+      width: 320px;
+      max-width: 100%;
+    }
+
+    select {
+      min-width: 220px;
+      max-width: 320px;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--button-bg);
+      color: var(--button-text);
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.08);
+      background-color: var(--button-hover);
+    }
+
+    .toggle-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .toggle-container input[type="checkbox"] {
+      width: 40px;
+      height: 20px;
+      appearance: none;
+      background: #ccc;
+      border-radius: 20px;
+      position: relative;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    .toggle-container input[type="checkbox"]:checked {
+      background: #00cc66;
+    }
+
+    .toggle-container input[type="checkbox"]::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 1px;
+      left: 1px;
+      transition: transform 0.3s ease;
+    }
+
+    .toggle-container input[type="checkbox"]:checked::before {
+      transform: translateX(20px);
+    }
+
+    .toggle-container label {
+      font-size: 14px;
+      color: var(--text-color);
+      user-select: none;
+    }
+
+    .iframe-tester {
+      margin-top: 30px;
+      width: 100%;
+      max-width: 900px;
+      height: 400px;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+
+    .iframe-tester iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Manual Dark Mode Toggle -->
+  <div class="toggle-container">
+    <label for="darkModeToggle">Dark Mode</label>
+    <input type="checkbox" id="darkModeToggle" aria-label="Toggle dark mode">
+  </div>
+
+  <div class="container">
+
+    <!-- Proxy search + dropdown + launch button -->
+    <div class="input-container" style="margin-bottom: 40px;">
+      <input type="text" id="proxySearch" placeholder="Search Proxies..." oninput="filterProxies()" aria-label="Search proxies">
+      <select id="proxySelect" aria-label="Select proxy"></select>
+      <button onclick="launchSelectedProxy()" aria-label="Launch selected proxy">Launch Proxy</button>
+    </div>
+
+    <!-- Search bar and button to load URL -->
+    <div class="input-container">
+      <input type="text" id="urlInput" placeholder="Enter a URL (e.g. https://example.com)" aria-label="Enter URL">
+      <button onclick="loadIframe()" aria-label="Load URL in iframe">Go</button>
+    </div>
+
+    <!-- Iframe Tester -->
+    <div class="iframe-tester" aria-label="Iframe tester">
+      <iframe id="testerIframe" src="about:blank" title="Iframe Tester"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Dark Mode toggle with localStorage
+    const toggle = document.getElementById('darkModeToggle');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    toggle.addEventListener('change', () => {
+      if (toggle.checked) {
+        document.body.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.body.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    });
+
+    // Reduced Proxies List: Only sm.ix.tc and Shadow
+    const proxies = [
+      { name: "sm.ix.tc 😎", url: "https://sm.ix.tc/" },
+      { name: "Shadow", url: "https://spanish.bsfa.info/" }
+    ];
+
+    function populateProxyDropdown() {
+      const select = document.getElementById('proxySelect');
+      select.innerHTML = '';
+      proxies.forEach(proxy => {
+        const option = document.createElement('option');
+        option.value = proxy.url;
+        option.textContent = proxy.name;
+        select.appendChild(option);
+      });
+    }
+
+    function filterProxies() {
+      const search = document.getElementById('proxySearch').value.toLowerCase();
+      const select = document.getElementById('proxySelect');
+      select.innerHTML = '';
+      proxies
+        .filter(proxy => proxy.name.toLowerCase().includes(search))
+        .forEach(proxy => {
+          const option = document.createElement('option');
+          option.value = proxy.url;
+          option.textContent = proxy.name;
+          select.appendChild(option);
+        });
+    }
+
+    function launchSelectedProxy() {
+      const select = document.getElementById('proxySelect');
+      const url = select.value;
+      if (!url) return;
+
+      const newTab = window.open('', '_blank');
+      newTab.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Proxy Site</title></head>
+        <body style="margin:0;padding:0;">
+          <iframe src="${url}" width="100%" height="100%" style="border:none;position:fixed;top:0;left:0;bottom:0;right:0;"></iframe>
+        </body>
+        </html>
+      `);
+      newTab.document.close();
+    }
+
+    function loadIframe() {
+      const input = document.getElementById('urlInput').value.trim();
+      if (!input) return;
+
+      const url = input.startsWith('http://') || input.startsWith('https://') ? input : 'https://' + input;
+      const iframe = document.getElementById('testerIframe');
+      iframe.src = url;
+    }
+
+    // Initialize on page load
+    window.onload = () => {
+      populateProxyDropdown();
+
+      if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && prefersDark)) {
+        document.body.classList.add('dark');
+        toggle.checked = true;
+      }
+    };
+  </script>
+
+</body>
+</html>
